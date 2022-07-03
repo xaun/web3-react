@@ -17,6 +17,11 @@ interface BasicChainInformation {
   name: string
 }
 
+interface AddChainParameter extends Omit<AddEthereumChainParameter, 'chainId'> {
+  // Should be string (hex decimal) as per https://docs.metamask.io/guide/rpc-api.html#wallet-addethereumchain
+  chainId: string | number
+}
+
 interface ExtendedChainInformation extends BasicChainInformation {
   nativeCurrency: AddEthereumChainParameter['nativeCurrency']
   blockExplorerUrls: AddEthereumChainParameter['blockExplorerUrls']
@@ -32,7 +37,22 @@ export function getAddChainParameters(chainId: number): AddEthereumChainParamete
   const chainInformation = CHAINS[chainId]
   if (isExtendedChainInformation(chainInformation)) {
     return {
-      chainId,
+      chainId: chainId,
+      chainName: chainInformation.name,
+      nativeCurrency: chainInformation.nativeCurrency,
+      rpcUrls: chainInformation.urls,
+      blockExplorerUrls: chainInformation.blockExplorerUrls,
+    }
+  } else {
+    return chainId
+  }
+}
+
+export function getAddChainParamsHex(chainId: number): AddChainParameter | number {
+  const chainInformation = CHAINS[chainId]
+  if (isExtendedChainInformation(chainInformation)) {
+    return {
+      chainId: `0x${chainId.toString(16)}`,
       chainName: chainInformation.name,
       nativeCurrency: chainInformation.nativeCurrency,
       rpcUrls: chainInformation.urls,
@@ -51,6 +71,16 @@ export const CHAINS: { [chainId: number]: BasicChainInformation | ExtendedChainI
       'https://cloudflare-eth.com',
     ].filter((url) => url !== undefined),
     name: 'Mainnet',
+  },
+  97: {
+    name: 'BSC Testnet',
+    urls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+    nativeCurrency: {
+      name: 'BNB Testnet',
+      symbol: 'BNB',
+      decimals: 18,
+    },
+    blockExplorerUrls: ['https://testnet.bscscan.com'],
   },
   3: {
     urls: [process.env.infuraKey ? `https://ropsten.infura.io/v3/${process.env.infuraKey}` : undefined].filter(
